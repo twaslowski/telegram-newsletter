@@ -11,12 +11,13 @@ script.
 newsletter-bot/
 ├── src/
 │   └── index.ts          # Cloudflare Worker — webhook + broadcast handler
-├── sender/
-│   └── send-update.mjs   # CLI tool to broadcast an update
-├── widget.html           # Embeddable "Subscribe on Telegram" button
-├── wrangler.jsonc         # Wrangler / Workers configuration
+├── broadcast/
+│   └── index.mjs         # CLI tool to broadcast an update
 ├── package.json
-└── tsconfig.json
+├── Taskfile.yaml         # Various lifecycle tasks; task --list for help
+├── tsconfig.json
+├── widget.html           # Embeddable "Subscribe on Telegram" button
+└── wrangler.jsonc        # Wrangler / Workers configuration
 ```
 
 ---

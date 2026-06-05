@@ -12,7 +12,7 @@ tasks:
       - .env
     vars:
       FILE: "{{index .MATCH 0}}"
-    cmd: cat {{ .FILE }} | node broadcast.mjs
+    cmd: cat {{ .FILE }} | node broadcast/index.mjs
 
   fmt:
     desc: Run formatting
