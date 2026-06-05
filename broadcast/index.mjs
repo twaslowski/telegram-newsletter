@@ -20,6 +20,7 @@ if (!WORKER_URL || !WEBHOOK_SECRET) {
   );
   process.exit(1);
 }
+
 async function readStdin() {
   return new Promise((resolve) => {
     const lines = [];
@@ -28,9 +29,11 @@ async function readStdin() {
     rl.on("close", () => resolve(lines.join("\n")));
   });
 }
+
 async function main() {
   let text;
   const filePath = process.argv[2];
+
   if (filePath) {
     text = readFileSync(filePath, "utf8").trim();
   } else if (!process.stdin.isTTY) {
@@ -41,10 +44,12 @@ async function main() {
     );
     process.exit(1);
   }
+
   if (!text) {
     console.error("Error: message text is empty.");
     process.exit(1);
   }
+
   console.log(`Sending ${text.length} characters to ${WORKER_URL}/broadcast …`);
   const response = await fetch(`${WORKER_URL}/broadcast`, {
     method: "POST",
@@ -54,11 +59,13 @@ async function main() {
     },
     body: JSON.stringify({ text }),
   });
+
   if (!response.ok) {
     const body = await response.text();
     console.error(`Error: Worker responded with ${response.status} — ${body}`);
     process.exit(1);
   }
+
   const result = await response.json();
   console.log(
     `✅ Done — ${result.sent}/${result.total} sent, ${result.failed} failed.`,

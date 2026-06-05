@@ -1,20 +1,22 @@
 version: "3"
 tasks:
-  register:
-    desc: Register Telegram bot
+
+  dev:
+    desc: Start local development environment (auto-registers webhook)
+    cmd: ./scripts/dev-local.sh
+
+  register:*:
+    desc: Register Telegram webhook for a given environment (prod/local)
+    vars:
+      ENV: "{{index .MATCH 0}}"
     dotenv:
-      - .env
+      - .env.{{ .ENV }}
     cmd: curl "https://api.telegram.org/bot$BOT_TOKEN/setWebhook?url=$WORKER_URL/webhook&secret_token=$WEBHOOK_SECRET"
 
-  broadcast:*:
-    desc: Send an update to all subscribers
-    dotenv:
-      - .env
-    vars:
-      FILE: "{{index .MATCH 0}}"
-    cmd: cat {{ .FILE }} | node broadcast/index.mjs
+  broadcast:local:
+    desc: Send an update to all subscribers (local)
+    cmd: ./scripts/broadcast-local.sh {{ .CLI_ARGS }}
 
-  fmt:
-    desc: Run formatting
-    cmds:
-      - prettier -w *.{mjs,json} src/
+  broadcast:prod:
+    desc: Send an update to all subscribers (production - requires confirmation)
+    cmd: ./scripts/broadcast-prod.sh {{ .CLI_ARGS }}

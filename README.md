@@ -99,45 +99,92 @@ You should get `{"ok":true,"result":true}`.
 
 ## Local development
 
-```bash
-npm run dev
-```
+### Setup
 
-Wrangler starts a local server at `http://localhost:8787`.
-To test the webhook locally you'll need a public tunnel (
-e.g. [cloudflared tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)):
+1. Create a development bot with [@BotFather](https://t.me/BotFather) (separate from production)
+2. Create a `.env.local` file with your development bot credentials:
 
 ```bash
-cloudflared tunnel --url http://localhost:8787
+BOT_TOKEN="<your-dev-bot-token>"
+WEBHOOK_SECRET="<same-secret-as-production>"
+WORKER_URL=""  # This will be auto-updated by the dev script
 ```
 
-Point Telegram's webhook at the tunnel URL (step 6 above, using the tunnel URL instead).
+### Start development server
+
+The easiest way to start local development is with the automated script:
+
+```bash
+task dev
+# or directly: ./dev-local.sh
+```
+
+This script will:
+
+1. Start `wrangler dev --tunnel` in the background
+2. Wait for and capture the tunnel URL
+3. Update `.env.local` with the new tunnel URL
+4. Automatically register the webhook with your development bot
+5. Display the ready-to-use URLs
+
+Press `Ctrl+C` to stop the development server.
+
+### Manual setup (alternative)
+
+If you prefer manual control:
+
+```bash
+# 1. Start wrangler with tunnel
+npx wrangler dev --tunnel
+
+# 2. Copy the tunnel URL (e.g., https://xxxx.trycloudflare.com)
+# 3. Update .env.local with the WORKER_URL
+# 4. Register the webhook
+task register:local
+```
 
 ---
 
 ## Sending an update
 
-Set two environment variables in your shell:
+### Development (local)
+
+```bash
+task broadcast:local -- messages/test.md
+# or directly: ./broadcast-local.sh messages/test.md
+```
+
+### Production
+
+```bash
+task broadcast:prod -- messages/newsletter.md
+# or directly: ./broadcast-prod.sh messages/newsletter.md
+```
+
+The production script requires confirmation before sending.
+
+The broadcast script will:
+
+- Load the appropriate environment variables (`.env.local` or `.env.prod`)
+- Send the message to all subscribers via the `/broadcast` endpoint
+- Display a summary: `✅ Done — 42/42 sent, 0 failed.`
+
+### Alternative: Direct usage
+
+You can also use the broadcast script directly with environment variables:
 
 ```bash
 export WORKER_URL="https://newsletter-bot.<your-subdomain>.workers.dev"
 export WEBHOOK_SECRET="<your secret>"
+node broadcast/index.mjs path/to/update.md
 ```
 
-Then broadcast a Markdown file:
+Or pipe content:
 
 ```bash
-node sender/send-update.mjs path/to/update.md
+echo "**Hello subscribers!** New post is live." | node broadcast/index.mjs
+cat update.md | node broadcast/index.mjs
 ```
-
-Or pipe content directly:
-
-```bash
-echo "**Hello subscribers!** New post is live." | node sender/send-update.mjs
-cat update.md | node sender/send-update.mjs
-```
-
-The script prints a summary: `✅ Done — 42/42 sent, 0 failed.`
 
 ---
 
@@ -151,7 +198,7 @@ then paste the snippet wherever you want the subscribe button to appear.
 ## Bot commands
 
 | Command  | Behaviour                                                    |
-| -------- | ------------------------------------------------------------ |
+|----------|--------------------------------------------------------------|
 | `/start` | Subscribes the user (idempotent) and shows a welcome message |
 | `/stop`  | Removes the user from the subscriber list                    |
 

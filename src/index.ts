@@ -30,11 +30,20 @@ async function sendMessage(
   const body: Record<string, unknown> = { chat_id: chatId, text };
   if (parseMode) body.parse_mode = parseMode;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const result = await fetch(
+    `https://api.telegram.org/bot${token}/sendMessage`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+
+  if (!result.ok) {
+    const errorText = await result.text();
+    console.error(`Failed to send message to ${chatId}: ${errorText}`);
+    throw new Error(`Telegram API error: ${errorText}`);
+  }
 }
 
 async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
@@ -93,6 +102,7 @@ export default {
     // Webhook endpoint — called by Telegram on every update
     if (request.method === "POST" && url.pathname === "/webhook") {
       const secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
+      console.log(env.WEBHOOK_SECRET);
       if (secret !== env.WEBHOOK_SECRET) {
         return new Response("Unauthorized", { status: 401 });
       }
@@ -122,7 +132,7 @@ export default {
         return new Response("Bad Request", { status: 400 });
       }
 
-      if (!body.text || typeof body.text !== "string") {
+      if (!body.text) {
         return new Response("Missing `text` field", { status: 422 });
       }
 

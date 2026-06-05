@@ -1,7 +1,4 @@
 {
-  // Wrangler configuration for the newsletter bot Worker.
-  // Run `npx wrangler kv namespace create SUBSCRIBERS` and paste the resulting
-  // id into the `id` field below before deploying.
   "name": "newsletter-bot",
   "main": "src/index.ts",
   "compatibility_date": "2025-09-01",
@@ -9,17 +6,22 @@
     {
       "binding": "SUBSCRIBERS",
       "id": "65b4af7f012b4826b27051f1b708d71a",
-      "remote": true,
-    },
+      "remote": false
+    }
   ],
   "observability": {
     "logs": {
       "enabled": true,
-      "invocation_logs": true,
-    },
+      "invocation_logs": true
+    }
   },
-  // Secrets (BOT_TOKEN, WEBHOOK_SECRET) are NOT stored here.
-  // Add them with:
-  //   npx wrangler secret put BOT_TOKEN
-  //   npx wrangler secret put WEBHOOK_SECRET
+  "routes": [
+    {
+      "pattern": "tgnl.twaslowski.com",
+      "custom_domain": true
+    }
+  ],
+  "secrets": {
+    "required": ["WEBHOOK_SECRET", "BOT_TOKEN"]
+  }
 }

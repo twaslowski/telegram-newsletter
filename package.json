@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --tunnel",
     "deploy": "wrangler deploy",
+    "fmt": "prettier --write broadcast src",
     "cf-typegen": "wrangler types"
   },
   "devDependencies": {
