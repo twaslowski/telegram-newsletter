@@ -1,0 +1,20 @@
+version: "3"
+tasks:
+  register:
+    desc: Register Telegram bot
+    dotenv:
+      - .env
+    cmd: curl "https://api.telegram.org/bot$BOT_TOKEN/setWebhook?url=$WORKER_URL/webhook&secret_token=$WEBHOOK_SECRET"
+
+  broadcast:*:
+    desc: Send an update to all subscribers
+    dotenv:
+      - .env
+    vars:
+      FILE: "{{index .MATCH 0}}"
+    cmd: cat {{ .FILE }} | node broadcast.mjs
+
+  fmt:
+    desc: Run formatting
+    cmds:
+      - prettier -w *.{mjs,json} src/
