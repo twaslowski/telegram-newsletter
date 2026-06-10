@@ -1,9 +1,14 @@
 version: "3"
 tasks:
-
   dev:
     desc: Start local development environment (auto-registers webhook)
     cmd: ./scripts/dev-local.sh
+
+  deploy:
+    desc: Deploy to production environment (auto-registers webhook)
+    cmds:
+      - task: secrets
+      - pnpm wrangler deploy
 
   register:*:
     desc: Register Telegram webhook for a given environment (prod/local)
@@ -12,3 +17,12 @@ tasks:
     dotenv:
       - .env.{{ .ENV }}
     cmd: curl "https://api.telegram.org/bot$BOT_TOKEN/setWebhook?url=$WORKER_URL/webhook&secret_token=$WEBHOOK_SECRET"
+
+  secrets:
+    desc: Set all secrets from .env.prod in Cloudflare Workers
+    cmds:
+      - |
+        grep -v '^#' .env.prod | grep -v '^$' | while IFS='=' read -r key value; do
+          value=$(echo "$value" | sed 's/^"//;s/"$//')
+          echo "$value" | pnpm wrangler secret put "$key"
+        done
