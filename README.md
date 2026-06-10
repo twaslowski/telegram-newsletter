@@ -3,28 +3,16 @@
 A minimal Telegram newsletter bot running on Cloudflare Workers, with a KV-backed subscriber list and a CLI sender
 script.
 
----
-
-## Project structure
-
-```
-newsletter-bot/
-├── src/
-│   └── index.ts          # Cloudflare Worker — webhook + broadcast handler
-├── broadcast/
-│   └── index.mjs         # CLI tool to broadcast an update
-├── package.json
-├── Taskfile.yaml         # Various lifecycle tasks; task --list for help
-├── tsconfig.json
-├── widget.html           # Embeddable "Subscribe on Telegram" button
-└── wrangler.jsonc        # Wrangler / Workers configuration
-```
+Similarly to a channel, it allows you to cultivate subscribers and send periodical updates to them.
+However, there is a larger degree of customizability: You can add various small interactions, making
+this a good addition to a digital garden of sorts.
 
 ---
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) ≥ 18
+- [pnpm](https://pnpm.io) ≥ 10
 - A [Cloudflare account](https://dash.cloudflare.com/sign-up) (free tier is fine)
 - A Telegram bot token — create one with [@BotFather](https://t.me/BotFather)
 - A random secret string for `WEBHOOK_SECRET` (e.g. `openssl rand -hex 32`)
@@ -36,25 +24,25 @@ newsletter-bot/
 ### 1. Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Log in to Cloudflare
 
 ```bash
-npx wrangler login
+pnpm wrangler login
 ```
 
 ### 3. Create the KV namespace
 
 ```bash
 # Production namespace
-npx wrangler kv namespace create SUBSCRIBERS
+pnpm wrangler kv namespace create SUBSCRIBERS
 # Preview namespace (used by `wrangler dev`)
-npx wrangler kv namespace create SUBSCRIBERS --preview
+pnpm wrangler kv namespace create SUBSCRIBERS --preview
 ```
 
-Copy the printed `id` values into `wrangler.jsonc`:
+Wrangler should add the `id` automatically to your `wrangler.jsonc`. If it doesn't, manually copy-paste it:
 
 ```jsonc
 "kv_namespaces": [
@@ -69,21 +57,22 @@ Copy the printed `id` values into `wrangler.jsonc`:
 ### 4. Store secrets
 
 ```bash
-npx wrangler secret put BOT_TOKEN
+pnpm wrangler secret put BOT_TOKEN
 # paste your Telegram bot token when prompted
 
-npx wrangler secret put WEBHOOK_SECRET
+pnpm wrangler secret put WEBHOOK_SECRET
 # paste your random secret string when prompted
+
+pnpm wrangler secret put ADMIN_CHAT_ID
 ```
+
+Alternatively, provide these values in your `.env.prod` and call `task secrets`.
 
 ### 5. Deploy
 
 ```bash
-npm run deploy
+pnpm run deploy
 ```
-
-Note the Worker URL printed at the end — it looks like
-`https://newsletter-bot.<your-subdomain>.workers.dev`.
 
 ### 6. Register the webhook with Telegram
 
@@ -108,6 +97,7 @@ You should get `{"ok":true,"result":true}`.
 BOT_TOKEN="<your-dev-bot-token>"
 WEBHOOK_SECRET="<same-secret-as-production>"
 WORKER_URL=""  # This will be auto-updated by the dev script
+ADMIN_CHAT_ID="<your-chat-id>"
 ```
 
 ### Start development server
@@ -135,7 +125,7 @@ If you prefer manual control:
 
 ```bash
 # 1. Start wrangler with tunnel
-npx wrangler dev --tunnel
+pnpm wrangler dev --tunnel
 
 # 2. Copy the tunnel URL (e.g., https://xxxx.trycloudflare.com)
 # 3. Update .env.local with the WORKER_URL
@@ -147,44 +137,8 @@ task register:local
 
 ## Sending an update
 
-### Development (local)
-
-```bash
-task broadcast:local -- messages/test.md
-# or directly: ./broadcast-local.sh messages/test.md
-```
-
-### Production
-
-```bash
-task broadcast:prod -- messages/newsletter.md
-# or directly: ./broadcast-prod.sh messages/newsletter.md
-```
-
-The production script requires confirmation before sending.
-
-The broadcast script will:
-
-- Load the appropriate environment variables (`.env.local` or `.env.prod`)
-- Send the message to all subscribers via the `/broadcast` endpoint
-- Display a summary: `✅ Done — 42/42 sent, 0 failed.`
-
-### Alternative: Direct usage
-
-You can also use the broadcast script directly with environment variables:
-
-```bash
-export WORKER_URL="https://newsletter-bot.<your-subdomain>.workers.dev"
-export WEBHOOK_SECRET="<your secret>"
-node broadcast/index.mjs path/to/update.md
-```
-
-Or pipe content:
-
-```bash
-echo "**Hello subscribers!** New post is live." | node broadcast/index.mjs
-cat update.md | node broadcast/index.mjs
-```
+When logged into your admin account, simply send a message to the bot, prefixed with `/broadcast`.
+Multimedia is supported.
 
 ---
 
