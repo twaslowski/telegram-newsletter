@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# todo: There's a lot of bad debugging code in this script because occasionally the webhook doesn't register properly.
+#  Sometimes it works, though, and I don't understand why yet. I suspect maybe DNS??
+
 # Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -60,17 +63,24 @@ fi
 
 echo -e "${GREEN}✅ Tunnel URL obtained: $TUNNEL_URL${NC}"
 
+sleep 3  # Avoid any issues with the tunnel not being fully ready
+echo "Tunnel resolves to $(curl -s $TUNNEL_URL)"
+
 # Update .env.local with the new tunnel URL
 echo -e "${YELLOW}📝 Updating .env.local with new tunnel URL...${NC}"
 sed -i.bak "s|^WORKER_URL=.*|WORKER_URL=$TUNNEL_URL|" .env.local
-rm -f .env.local.bak
+rm .env.local.bak
 
 # Re-source the updated environment
 source .env.local
 
 # Register the webhook with Telegram
 echo -e "${YELLOW}🔗 Registering webhook with Telegram...${NC}"
-WEBHOOK_RESPONSE=$(curl -s "https://api.telegram.org/bot$BOT_TOKEN/setWebhook?url=$TUNNEL_URL/webhook&secret_token=$WEBHOOK_SECRET")
+WEBHOOK_UPDATE_STRING="setWebhook?url=$TUNNEL_URL/webhook&secret_token=$WEBHOOK_SECRET"
+
+echo -e "${YELLOW}📡 Sending request to Telegram API: $WEBHOOK_UPDATE_STRING${NC}"
+
+WEBHOOK_RESPONSE=$(curl -s "https://api.telegram.org/bot$BOT_TOKEN/$WEBHOOK_UPDATE_STRING")
 
 if echo "$WEBHOOK_RESPONSE" | grep -q '"ok":true'; then
     echo -e "${GREEN}✅ Webhook registered successfully!${NC}"
@@ -78,17 +88,13 @@ if echo "$WEBHOOK_RESPONSE" | grep -q '"ok":true'; then
 else
     echo -e "${RED}❌ Failed to register webhook${NC}"
     echo -e "${YELLOW}Response: $WEBHOOK_RESPONSE${NC}"
+    exit 1
 fi
 
 # Display the wrangler output
 echo -e "\n${GREEN}═══════════════════════════════════════════════${NC}"
 echo -e "${GREEN}🎉 Local development environment is ready!${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════${NC}"
-echo -e "${YELLOW}Worker URL:${NC} $TUNNEL_URL"
-echo -e "${YELLOW}Webhook URL:${NC} $TUNNEL_URL/webhook"
-echo -e "${YELLOW}Broadcast endpoint:${NC} $TUNNEL_URL/broadcast"
-echo -e "\n${YELLOW}To send a test broadcast, run:${NC}"
-echo -e "  task broadcast:local -- messages/test.md"
 echo -e "\n${YELLOW}Press Ctrl+C to stop the development server${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════${NC}\n"
 

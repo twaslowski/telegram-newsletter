@@ -12,11 +12,3 @@ tasks:
     dotenv:
       - .env.{{ .ENV }}
     cmd: curl "https://api.telegram.org/bot$BOT_TOKEN/setWebhook?url=$WORKER_URL/webhook&secret_token=$WEBHOOK_SECRET"
-
-  broadcast:local:
-    desc: Send an update to all subscribers (local)
-    cmd: ./scripts/broadcast-local.sh {{ .CLI_ARGS }}
-
-  broadcast:prod:
-    desc: Send an update to all subscribers (production - requires confirmation)
-    cmd: ./scripts/broadcast-prod.sh {{ .CLI_ARGS }}

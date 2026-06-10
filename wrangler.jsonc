@@ -22,6 +22,6 @@
     }
   ],
   "secrets": {
-    "required": ["WEBHOOK_SECRET", "BOT_TOKEN"]
+    "required": ["WEBHOOK_SECRET", "BOT_TOKEN", "ADMIN_CHAT_ID"]
   }
 }
