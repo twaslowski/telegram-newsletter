@@ -1,5 +1,9 @@
 version: "3"
 tasks:
+  fmt:
+    desc: Format code using Prettier
+    cmd: pnpm prettier --write src/**/*.ts
+
   dev:
     desc: Start local development environment (auto-registers webhook)
     cmd: ./scripts/dev-local.sh

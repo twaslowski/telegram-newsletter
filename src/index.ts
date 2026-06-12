@@ -3,6 +3,7 @@ import { sendMessage } from "./telegram";
 import { handleStart } from "./handlers/start";
 import { handleStop } from "./handlers/stop";
 import { handleBroadcast } from "./handlers/broadcast";
+import { serveWidget } from "./widget";
 
 export type { Env };
 
@@ -39,11 +40,11 @@ async function handleUpdate(update: TelegramUpdate, env: Env): Promise<void> {
   // Works for both text messages and media with captions
   const caption = msg.caption?.trim();
   const content = text || caption;
-  
+
   if (content?.startsWith("/broadcast") && isAdmin(chatId, env)) {
     const broadcastText = content.slice("/broadcast".length).trim();
     const hasMedia = !!(msg.photo || msg.video || msg.document || msg.audio || msg.voice || msg.animation);
-    
+
     if (!broadcastText && !hasMedia) {
       await sendMessage(
         env.BOT_TOKEN,
@@ -71,7 +72,6 @@ export default {
     // Webhook endpoint — called by Telegram on every update
     if (request.method === "POST" && url.pathname === "/webhook") {
       const secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
-      console.log(env.WEBHOOK_SECRET);
       if (secret !== env.WEBHOOK_SECRET) {
         return new Response("Unauthorized", { status: 401 });
       }
@@ -85,6 +85,16 @@ export default {
 
       await handleUpdate(update, env);
       return new Response("OK");
+    }
+
+    if (request.method === "GET" && url.pathname === "/widget") {
+      return new Response(serveWidget(), {
+        headers: {
+          "Content-Type": "text/html;charset=UTF-8",
+          "X-Frame-Options": "ALLOWALL",
+          "Content-Security-Policy": "frame-ancestors *",
+        },
+    });
     }
 
     return new Response("Not Found", { status: 404 });

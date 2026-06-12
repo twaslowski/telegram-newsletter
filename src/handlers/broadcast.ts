@@ -1,4 +1,9 @@
-import type { Env, TelegramMessage, Subscriber, BroadcastResult } from "../types";
+import type {
+  Env,
+  TelegramMessage,
+  Subscriber,
+  BroadcastResult,
+} from "../types";
 import { sendMessage, copyMessage } from "../telegram";
 
 function hasMedia(message: TelegramMessage): boolean {
@@ -22,7 +27,11 @@ export async function handleBroadcast(
 
   // List all subscriber keys
   const list = await env.SUBSCRIBERS.list({ prefix: "subscriber:" });
-  const results: BroadcastResult = { sent: 0, failed: 0, total: list.keys.length };
+  const results: BroadcastResult = {
+    sent: 0,
+    failed: 0,
+    total: list.keys.length,
+  };
 
   for (const key of list.keys) {
     const raw = await env.SUBSCRIBERS.get(key.name);
@@ -50,7 +59,12 @@ export async function handleBroadcast(
         else results.failed++;
       } else {
         // Send text message
-        await sendMessage(env.BOT_TOKEN, subscriber.chatId, broadcastText!, "Markdown");
+        await sendMessage(
+          env.BOT_TOKEN,
+          subscriber.chatId,
+          broadcastText!,
+          "Markdown",
+        );
         results.sent++;
       }
     } catch {
